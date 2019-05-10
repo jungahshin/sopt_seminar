@@ -24,7 +24,9 @@ router.post('/', async(req, res) => {
         //try/catch로 await의 오류 잡음
         try {
             const salt = await crypto.randomBytes(32);
-            Info.salt = salt.toString('base64');//salt값        
+            const hashedPwd = await crypto.pbkdf2(Info.pwd.toString(), salt.toString('base64'), 1000, 32, 'SHA512');
+            Info.salt = salt.toString('base64');//salt값
+            Info.pwd=hashedPwd;        
             Info.time = moment().format("YYYY-MM-DD HH:mm:ss");
             //async-json2csv 모듈을 사용한 것 입니다.
             //위의 options를 똑같이 지켜줘야 여러분이 아는 csv 파일 형태로 저장되오니 꼭 지켜주세요.
@@ -100,6 +102,8 @@ router.get('/:id', (req, res) => {
                 }
             }
             if (jsonObj[i].id == req.params.id) {//id가 일치하는 게시물이 있으면
+                delete jsonObj[i].salt;
+                delete jsonObj[i].pwd;
                 res.status(200).send(util.successTrue(statusCode.OK, resMessage.BOARD_SELECT_SUCCESS, jsonObj[i]));
             } else {//id가 일치하는 게시물이 없으면
                 res.status(200).send(util.successFalse(statusCode.BAD_REQUEST, resMessage.NO_BOARD));
@@ -108,7 +112,7 @@ router.get('/:id', (req, res) => {
             res.status(200).send(util.successFalse(statusCode.INTERNAL_SERVER_ERROR, message));
         });
 });
-//게시물 고유 id와 같은 게시물을 수정된 값으로 다시 저장합니다.(게시물 작성 시간까지 같이 수정!)
+//게시물 고유 id와 pwd가 같은 게시물을 수정된 값으로 다시 저장합니다.(게시물 작성 시간까지 같이 수정!)
 router.put('/', (req, res)=>{
     const readCsvFile = (filePath) => { //promise 객체를 반환하는 함수를 만들어줍니다. readCsv라는 함수는 fileName이라는 매개변수를 가지는 함수이다.
         return new Promise((resolve, reject) => {//promise객체는 성공시에는 resolve를 실패시에는 reject를 반환한다.
@@ -128,14 +132,15 @@ router.put('/', (req, res)=>{
     .then(async(jsonObj) => {//readCsv함수를 실행을 해서 성공을 하게 되면(studentInfo.csv를 json객체로 성공적으로 바꾸었고 null값도 아니었다.) 즉, 반환되는 값이 resolve이면? (그러면 반환된 jsonObj가 studentData가 되는 것!!!!)
             for (var i = 0; i < jsonObj.length; i++) {//즉, 반환된 jsonObj의 length를 의미!
                 if (jsonObj[i].id == req.body.id) {
-                    break;
+                    var hashedPwd_ = await crypto.pbkdf2((req.body.pwd).toString(), jsonObj[i].salt, 1000, 32, 'SHA512');
+                    if(jsonObj[i].pwd == hashedPwd_){
+                        break;
+                    }
                 }
             }
-            if (i<jsonObj.length) {//id가 일치하는 게시물이 있으면-->수정한다.
-                //console.log(jsonObj[i].id);
+            if (i<jsonObj.length){//id와 pw가 일치하는 게시물이 있으면-->수정한다.
                 jsonObj[i].title=req.body.title;
                 jsonObj[i].contents=req.body.contents;
-                jsonObj[i].pwd=req.body.pwd;
                 jsonObj[i].time=moment().format("YYYY-MM-DD HH:mm:ss");
                 const boardInfoFinalCsv = await json2csv({
                     data: jsonObj,
