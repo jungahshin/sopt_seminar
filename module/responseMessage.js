@@ -18,10 +18,9 @@ module.exports = {//서버들끼리의 원활한 소통을 위해서 응답메�
     SAVE_FAIL:"csv 파일 작성 실패",
     ALREADY_BOARD:"이미 작성된 게시글입니다.",
     BOARD_SELECT_SUCCESS:"id일치 게시글 존재",
-    NO_BOARD:"id일치 게시글 없음",
+    NO_BOARD:"일치 게시글 없음",
     CANNOT_LOAD_BOARD:"게시글 없음",
     BOARD_CHANGE_SUCCESS:"게시글 수정 완료",
     BOARD_DELETE_SUCCESS:"게시글 삭제 완료",
     BOARD_SAVE_SUCCESS:"게시글 저장 완료",
-
 };

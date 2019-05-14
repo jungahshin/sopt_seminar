@@ -4,7 +4,7 @@ const crypto = require('crypto-promise');
 var json2csv = require('async-json2csv');
 var csv = require("csvtojson");
 const fs = require("fs");
-const util = require('../../module//utils');//js안붙여도 되나?
+const util = require('../../module/utils');//js안붙여도 되나?
 const statusCode = require('../../module/statusCode');
 const resMessage = require('../../module/responseMessage');
 const moment = require('moment');
@@ -182,7 +182,10 @@ router.delete('/', (req, res)=>{
     .then(async(jsonObj) => {//readCsv함수를 실행을 해서 성공을 하게 되면(studentInfo.csv를 json객체로 성공적으로 바꾸었고 null값도 아니었다.) 즉, 반환되는 값이 resolve이면? (그러면 반환된 jsonObj가 studentData가 되는 것!!!!)
             for (var i = 0; i < jsonObj.length; i++) {//즉, 반환된 jsonObj의 length를 의미!
                 if (jsonObj[i].id == req.body.id) {
-                    break;
+                    var hashedPwd_1 = await crypto.pbkdf2((req.body.pwd).toString(), jsonObj[i].salt, 1000, 32, 'SHA512');
+                    if(jsonObj[i].pwd == hashedPwd_1){
+                        break;
+                    }
                 }
             }
             if (i<jsonObj.length) {//id가 일치하는 게시물이 있으면-->수정한다.
